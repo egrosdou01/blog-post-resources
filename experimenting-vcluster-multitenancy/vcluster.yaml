@@ -1,0 +1,92 @@
+controlPlane:
+  distro:
+    k3s:
+      enabled: true
+      extraArgs:
+        - --tls-san=EXTERNAL-IP Address from LoadBalancer
+      image:
+        repository: "rancher/k3s"
+        tag: "v1.31.1-k3s1"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 40m
+          memory: 64Mi
+  proxy:
+    extraSANs:
+      - YOUR Custom Domain
+  coredns:
+    enabled: true
+  statefulSet:
+    resources:
+      limits:
+        ephemeral-storage: 2Gi
+        memory: 2Gi
+      requests:
+        ephemeral-storage: 400Mi
+        cpu: 200m
+        memory: 256Mi
+    highAvailability:
+      replicas: 1
+    security:
+      podSecurityContext: {}
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 0
+        runAsGroup: 0
+    persistence:
+      volumeClaim:
+        enabled: auto
+        retentionPolicy: Retain
+        size: 2Gi
+        storageClass: ""
+        accessModes: ["ReadWriteOnce"]
+exportKubeConfig:
+  server: "https://Your Custom Domain Name:443"
+  insecure: false
+experimental:
+  deploy:
+    vcluster:
+      manifests: |-
+        ---
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: nginx-app
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: nginx-dev
+          namespace: nginx-app
+        spec:
+          selector:
+            matchLabels:
+              app: nginx
+          replicas: 1
+          template:
+            metadata:
+              labels:
+                app: nginx
+            spec:
+              containers:
+              - name: nginx
+                image: nginx:latest
+                ports:
+                - containerPort: 80
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: nginx-dev
+          namespace: nginx-app
+        spec:
+          selector:
+            app: nginx
+          ports:
+            - protocol: TCP
+              port: 80
+              targetPort: 80
+          type: ClusterIP
