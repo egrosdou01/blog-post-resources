@@ -7,15 +7,15 @@ locals {
 data "talos_client_configuration" "talosconfig" {
   cluster_name         = var.talos_cluster_details.name
   client_configuration = talos_machine_secrets.this.client_configuration
-  endpoints            = [for i, v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
-  nodes                = [for i, v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
+  endpoints            = [for v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
+  nodes                = [for v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
 }
 
 # Generate the controller configuration and instantiate the Initial Image for the Talos configuration
 data "talos_machine_configuration" "machineconfig_controller" {
   cluster_name     = var.talos_cluster_details.name
   talos_version    = var.talos_cluster_details.version
-  cluster_endpoint = "https://${tolist([for i, v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address])[0]}:6443"
+  cluster_endpoint = "https://${tolist([for v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address])[0]}:6443"
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches = [
@@ -28,7 +28,7 @@ data "talos_machine_configuration" "machineconfig_controller" {
 data "talos_machine_configuration" "machineconfig_worker" {
   cluster_name     = var.talos_cluster_details.name
   talos_version    = var.talos_cluster_details.version
-  cluster_endpoint = "https://${tolist([for i, v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address])[0]}:6443"
+  cluster_endpoint = "https://${tolist([for v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address])[0]}:6443"
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
   config_patches = [
@@ -41,7 +41,7 @@ data "talos_machine_configuration" "machineconfig_worker" {
 data "talos_cluster_health" "cluster_health" {
   depends_on           = [null_resource.wait_for_agent]
   client_configuration = data.talos_client_configuration.talosconfig.client_configuration
-  control_plane_nodes  = [for i, v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
-  worker_nodes         = [for i, v in proxmox_vm_qemu.talos_vm_worker : v.default_ipv4_address]
+  control_plane_nodes  = [for v in proxmox_vm_qemu.talos_vm_controller : v.default_ipv4_address]
+  worker_nodes         = [for v in proxmox_vm_qemu.talos_vm_worker : v.default_ipv4_address]
   endpoints            = data.talos_client_configuration.talosconfig.endpoints
 }
