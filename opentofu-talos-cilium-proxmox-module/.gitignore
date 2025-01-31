@@ -1,0 +1,20 @@
+#Local .terraform directories
+*.tfstate
+*.tfstate.*
+terraform.tfvars*
+*.terraform
+.terraform.lock.hcl
+.terraform-docs.yml
+
+# Exlude the TF logs
+logs/
+terraform.log
+
+# Remove DS_CODE
+.DS_Store
+
+# Exclude the setenv.sh file
+setenv.sh
+
+# The directory holds sensitive data
+creds/
