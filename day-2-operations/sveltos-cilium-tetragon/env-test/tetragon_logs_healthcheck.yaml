@@ -1,0 +1,47 @@
+---
+apiVersion: lib.projectsveltos.io/v1beta1
+kind: HealthCheck
+metadata:
+  name: tetragon-log-fetcher
+spec:
+  collectResources: true
+  resourceSelectors:
+  - group: ""
+    version: "v1"
+    kind: "ConfigMap"
+    name: tetragon-logs
+    namespace: default
+  evaluateHealth: |
+    function evaluate()
+      local statuses = {}
+
+      for _,resource in ipairs(resources) do
+        status = "Degraded"
+        table.insert(statuses, {resource=resource, status = status, message = resource.data["tetragon-logs.txt"]}) # Ensure the data name you use here matches the name you used in the ConfigMap definition
+      end
+
+      local hs = {}
+      if #statuses > 0 then
+        hs.resources = statuses 
+      end
+      return hs
+    end
+---
+apiVersion: lib.projectsveltos.io/v1beta1
+kind: ClusterHealthCheck
+metadata:
+  name: tetragon-log-fetcher
+spec:
+  clusterSelector:
+    matchLabels:
+      env: test
+  livenessChecks:
+  - name: tetragon-log-fetcher
+    type: HealthCheck
+    livenessSourceRef:
+      kind: HealthCheck
+      apiVersion: lib.projectsveltos.io/v1beta1
+      name: tetragon-log-fetcher
+  notifications:
+  - name: event
+    type: KubernetesEvent

@@ -1,0 +1,28 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: tetragon-test-deploy
+spec:
+  clusterSelector:
+    matchLabels:
+      env: test
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.16.1
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+  - chartName: cilium/tetragon
+    chartVersion: 1.2.0
+    helmChartAction: Install
+    releaseName: tetragon
+    releaseNamespace: kube-system
+    repositoryName: tetragon
+    repositoryURL: https://helm.cilium.io/
+  policyRefs:
+  - name: tetragon-policy-socket-log
+    namespace: default
+    kind: ConfigMap
