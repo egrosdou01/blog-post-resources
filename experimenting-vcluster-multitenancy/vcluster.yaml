@@ -45,7 +45,10 @@ controlPlane:
         accessModes: ["ReadWriteOnce"]
 exportKubeConfig:
   server: "https://Your Custom Domain Name:443"
+  context: vcluster-dev
   insecure: false
+  secret:
+    name: vcluster-dev
 experimental:
   deploy:
     vcluster:
