@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of users"
+    }
+  },
+  "required": ["users"],
+  "title": "Values",
+  "type": "object"
+}

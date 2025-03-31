@@ -1,0 +1,19 @@
+{{- range $user := .Values.users }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ $user }}"
+  namespace: default
+  labels:
+    target: capi
+spec:
+  selector:
+    app: capi
+    release: "{{ $user }}-capi"
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8443
+  type: LoadBalancer
+{{- end }}
