@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deploy-cyclops-template
+  namespace: default
+data:
+  cyclops-template.yaml: |-
+    ---
+    apiVersion: cyclops-ui.com/v1alpha1
+    kind: TemplateStore
+    metadata:
+      name: lb-service
+      namespace: cyclops
+    spec:
+      path: capi-sveltos-cyclops/helm-charts/lb-svc
+      repo: https://github.com/egrosdou01/blog-post-resources
+      version: main
+      sourceType: git
