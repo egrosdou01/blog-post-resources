@@ -1,0 +1,43 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-capi-linode-managed
+spec:
+  clusterSelector:
+    matchExpressions:
+    - { key: type, operator: In, values: [ staging, production ] }
+  syncMode: Continuous
+  helmCharts:
+  - repositoryURL:    https://kyverno.github.io/kyverno/
+    repositoryName:   kyverno
+    chartName:        kyverno/kyverno
+    chartVersion:     v3.3.3
+    releaseName:      kyverno-latest
+    releaseNamespace: kyverno
+    helmChartAction:  Install
+  - repositoryURL:    https://prometheus-community.github.io/helm-charts
+    repositoryName:   prometheus-community
+    chartName:        prometheus-community/prometheus
+    chartVersion:     26.0.0
+    releaseName:      prometheus
+    releaseNamespace: prometheus
+    helmChartAction:  Install
+  - repositoryURL:    https://grafana.github.io/helm-charts
+    repositoryName:   grafana
+    chartName:        grafana/grafana
+    chartVersion:     8.6.4
+    releaseName:      grafana
+    releaseNamespace: grafana
+    helmChartAction:  Install
+  - repositoryURL: https://cyclops-ui.com/helm
+    repositoryName: cyclops-ui
+    chartName: cyclops-ui/cyclops
+    chartVersion: 0.14.5
+    releaseName: cyclops
+    releaseNamespace: cyclops
+    helmChartAction: Install
+  policyRefs:
+  - name: deploy-cyclops-template
+    namespace: default
+    kind: ConfigMap
