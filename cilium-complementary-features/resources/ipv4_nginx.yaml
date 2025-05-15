@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: html-message
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Welcome</title>
+    </head>
+    <body>
+        <h1>Hello from IPv4!</h1>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ipv4
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-ipv4
+  template:
+    metadata:
+      labels:
+        app: nginx-ipv4
+    spec:
+      containers:
+      - name: nginx-ipv4
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: html-message
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service-ipv4
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx-ipv4
+  ports:
+    - port: 80
+      targetPort: 80
