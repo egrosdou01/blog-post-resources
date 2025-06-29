@@ -1,0 +1,26 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    cert-manager.io/issuer: cloudflare-issuer # Specify the name of your issuer resource
+spec:
+  gatewayClassName: cilium
+  listeners:
+  - hostname: argocd.example.com # Specify a valid domain to reach your application
+    name: argocd-example-com-http
+    port: 80
+    protocol: HTTP
+  - hostname: argocd.example.com # Specify a valid domain to reach your application
+    name: argocd-example-com-https
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - kind: Secret
+        name: argocd-server-tls # Specify the secret name to be used with your application. The default name is `argocd-server-tls`
+    allowedRoutes:
+      namespaces:
+        from: All
