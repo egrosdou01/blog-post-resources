@@ -20,7 +20,7 @@ spec:
     helmChartAction: Install
     releaseName: tetragon
     releaseNamespace: kube-system
-    repositoryName: tetragon
+    repositoryName: cilium
     repositoryURL: https://helm.cilium.io/
   policyRefs:
   - name: tetragon-policy-socket-log
