@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+data:
+  capi-azure-common.yaml: |
+    ---
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: AzureClusterIdentity
+    metadata:
+      labels:
+        clusterctl.cluster.x-k8s.io/move-hierarchy: "true"
+      name: cluster-identity
+      namespace: default
+    spec:
+      allowedNamespaces: {}
+      clientID: <clientID>
+      tenantID: <tenantID>
+      type: ServicePrincipal
+      clientSecret:
+        name: cluster-identity-secret
+        namespace: default
+    ---
+    apiVersion: v1
+    data:
+      clientSecret: <BASE64 encoded Azure App Client Secret>
+    kind: Secret
+    metadata:
+      name: cluster-identity-secret
+      namespace: default
+    type: Opaque
+kind: ConfigMap
+metadata:
+  name: deploy-azure-common
+  namespace: default

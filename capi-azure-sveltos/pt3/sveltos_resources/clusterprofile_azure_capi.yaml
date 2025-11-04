@@ -1,0 +1,20 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-azure-capi
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt
+  templateResourceRefs:
+  - resource:
+      apiVersion: v1
+      kind: ConfigMap
+      name: existing-users
+      namespace: default
+    identifier: Users
+  policyRefs:
+  - name: deploy-azure-capi
+    namespace: default
+    kind: ConfigMap

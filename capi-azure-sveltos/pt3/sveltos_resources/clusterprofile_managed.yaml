@@ -1,0 +1,46 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-capi-azure-managed
+spec:
+  clusterSelector:
+    matchExpressions:
+    - { key: env, operator: In, values: [ staging, production ] }
+  syncMode: Continuous
+  helmCharts:
+  - chartName: cloud-provider-azure/cloud-provider-azure
+    chartVersion: 1.34.1
+    helmChartAction: Install
+    releaseName: cloud-provider-azure
+    releaseNamespace: kube-system
+    repositoryName: cloud-provider-azure
+    repositoryURL: https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo
+    values: |
+      infra:
+        clusterName: "{{ .Cluster.metadata.name }}"
+      cloudControllerManager:
+        clusterCIDR: "192.168.0.0/16"
+  - chartName: cilium/cilium
+    chartVersion: 1.17.7
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      ipam:
+        mode: "cluster-pool"
+        operator:
+          clusterPoolIPv4PodCIDRList:
+            - "192.168.0.0/16"
+          clusterPoolIPv4MaskSize: 24
+      kubeProxyReplacement: true
+      bpf:
+        masquerade: true
+      hubble:
+        enabled: true
+        relay:
+          enabled: true
+        ui:
+          enabled: true
