@@ -1,0 +1,13 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-azure-common
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt
+  policyRefs:
+  - name: deploy-azure-common
+    namespace: default
+    kind: ConfigMap

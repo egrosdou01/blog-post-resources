@@ -1,0 +1,210 @@
+---
+apiVersion: v1
+data:
+  capi-azure.yaml: |
+    {{- if index (getResource "Users") "data" }}
+      {{- range $key, $value := (getResource "Users").data }}
+        {{- $user := $value | fromYaml }}
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: Cluster
+          metadata:
+            name: {{ $key }}
+            namespace: default
+            labels:
+              env: {{ $user.env }}
+          spec:
+            clusterNetwork:
+              pods:
+                cidrBlocks:
+                  - 192.168.0.0/16
+            controlPlaneRef:
+              apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+              kind: KubeadmControlPlane
+              name: {{ $key }}-control-plane
+            infrastructureRef:
+              apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+              kind: AzureCluster
+              name: {{ $key }}
+    ---
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+          kind: AzureCluster
+          metadata:
+            name: {{ $key }}
+            namespace: default
+          spec:
+            identityRef:
+              apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+              kind: AzureClusterIdentity
+              name: cluster-identity
+            location: francecentral
+            networkSpec:
+              subnets:
+                - name: control-plane-subnet
+                  role: control-plane
+                - name: node-subnet
+                  role: node
+              vnet:
+                name: {{ $key }}-vnet
+            resourceGroup: capi-test
+            subscriptionID: 12345678
+    ---
+          apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+          kind: KubeadmControlPlane
+          metadata:
+            name: {{ $key }}-control-plane
+            namespace: default
+          spec:
+            kubeadmConfigSpec:
+              clusterConfiguration:
+                apiServer:
+                  extraArgs: {}
+                  timeoutForControlPlane: 20m
+                controllerManager:
+                  extraArgs:
+                    allocate-node-cidrs: "false"
+                    cloud-provider: external
+                    cluster-name: {{ $key }}
+                etcd:
+                  local:
+                    dataDir: /var/lib/etcddisk/etcd
+                    extraArgs:
+                      quota-backend-bytes: "8589934592"
+              diskSetup:
+                filesystems:
+                  - device: /dev/disk/azure/scsi1/lun0
+                    extraOpts:
+                      - -E
+                      - lazy_itable_init=1,lazy_journal_init=1
+                    filesystem: ext4
+                    label: etcd_disk
+                  - device: ephemeral0.1
+                    filesystem: ext4
+                    label: ephemeral0
+                    replaceFS: ntfs
+                partitions:
+                  - device: /dev/disk/azure/scsi1/lun0
+                    layout: true
+                    overwrite: false
+                    tableType: gpt
+              files:
+                - contentFrom:
+                    secret:
+                      key: control-plane-azure.json
+                      name: {{ $key }}-md-0-azure-json
+                  owner: root:root
+                  path: /etc/kubernetes/azure.json
+                  permissions: "0644"
+              initConfiguration:
+                nodeRegistration:
+                  kubeletExtraArgs:
+                    cloud-provider: external
+                  name: '{{`{{ ds.meta_data["local_hostname"] }}`}}'
+              joinConfiguration:
+                nodeRegistration:
+                  kubeletExtraArgs:
+                    cloud-provider: external
+                  name: '{{`{{ ds.meta_data["local_hostname"] }}`}}'
+              mounts:
+                - - LABEL=etcd_disk
+                  - /var/lib/etcddisk
+              postKubeadmCommands: []
+              preKubeadmCommands: []
+              verbosity: 10
+            machineTemplate:
+              infrastructureRef:
+                apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+                kind: AzureMachineTemplate
+                name: {{ $key }}-control-plane
+            replicas: 3
+            version: {{ $user.version }}
+    ---
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+          kind: AzureMachineTemplate
+          metadata:
+            name: {{ $key }}-control-plane
+            namespace: default
+          spec:
+            template:
+              spec:
+                dataDisks:
+                  - diskSizeGB: 256
+                    lun: 0
+                    nameSuffix: etcddisk
+                identity: UserAssigned
+                osDisk:
+                  diskSizeGB: 128
+                  osType: Linux
+                sshPublicKey: ""
+                userAssignedIdentities:
+                  - providerID: /subscriptions/12345678/resourceGroups/capi-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/cloud-provider-user-identity
+                vmSize: Standard_D2s_v3
+    ---
+          apiVersion: cluster.x-k8s.io/v1beta1
+          kind: MachineDeployment
+          metadata:
+            name: {{ $key }}-md-0
+            namespace: default
+          spec:
+            clusterName: {{ $key }}
+            replicas: 2
+            selector:
+              matchLabels: null
+            template:
+              spec:
+                bootstrap:
+                  configRef:
+                    apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+                    kind: KubeadmConfigTemplate
+                    name: {{ $key }}-md-0
+                clusterName: {{ $key }}
+                infrastructureRef:
+                  apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+                  kind: AzureMachineTemplate
+                  name: {{ $key }}-md-0
+                version: {{ $user.version }}
+    ---
+          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+          kind: AzureMachineTemplate
+          metadata:
+            name: {{ $key }}-md-0
+            namespace: default
+          spec:
+            template:
+              spec:
+                osDisk:
+                  diskSizeGB: 128
+                  osType: Linux
+                sshPublicKey: ""
+                vmSize: Standard_D2s_v3
+    ---
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          metadata:
+            name: {{ $key }}-md-0
+            namespace: default
+          spec:
+            template:
+              spec:
+                files:
+                  - contentFrom:
+                      secret:
+                        key: worker-node-azure.json
+                        name: {{ $key }}-md-0-azure-json
+                    owner: root:root
+                    path: /etc/kubernetes/azure.json
+                    permissions: "0644"
+                joinConfiguration:
+                  nodeRegistration:
+                    kubeletExtraArgs:
+                      cloud-provider: external
+                    name: '{{`{{ ds.meta_data["local_hostname"] }}`}}'
+                preKubeadmCommands: []
+    ---
+    {{- end }}
+    {{- end }}
+kind: ConfigMap
+metadata:
+  name: deploy-azure-capi
+  namespace: default
+  annotations:
+    projectsveltos.io/template: ok
