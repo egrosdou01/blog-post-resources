@@ -1,0 +1,65 @@
+version: '>= 0.16.0'
+
+formatter: markdown table
+
+content: |-
+  # Terraform Talos Cluster Creation
+
+  [TOC]
+
+  ## Introduction
+
+  The repository is a showcase of the blog post found [here](https://blog.grosdouli.dev/blog/talos-on-proxmox-opentofu-part-4). The code allows users to create multiple Talos Kubernetes clusters on Proxmox 8.2.4 powered by [Cilium](https://docs.cilium.io/en/stable/). Cilium kube-proxy replacement alongside Gateway API capabilities are enabled. More information about the Cilium setup, have a look at the directory `modules/talos/files/init_install_controller.tfmpl`.
+  
+  In the 5th part of the series, we introduce [Longhorn](https://longhorn.io/) as a distributed block storage.
+
+  The code now is converted into a module to be reusable by multiple users following GitOps approaches.
+
+  ## Pre-prerequisites
+  1. Proxmox version 8.2.x or greater
+  1. Proxmox Token
+  1. OpenTofu binary installed
+
+  ## Execute OpenTofu Plan
+  Note: Identify your own way of exposing sensitive variables before the execution of the plan.
+
+  ```bash
+  1. tofu init
+  2. tofu plan
+  3. tofu apply
+  ```
+
+  ## Delete Resources
+
+  ```bash
+  $ tofu destroy
+  ```
+
+  ## Tested Versions
+  | SOFTWARE        | VERSION | DOCS                                                                 |
+  |:----------------|:--------|:----------------------------------------------------------------------|
+  | Proxmox VE      | 8.2.4   | [Proxmox VE Overview](https://www.proxmox.com/en/proxmox-virtual-environment/overview) |
+  | Talos Provider  | 0.8.1   | [Talos Provider Docs](https://search.opentofu.org/provider/siderolabs/talos/v0.6.1) |
+  | Talos Linux     | 1.11.3   | [Talos Linux Release](https://github.com/siderolabs/talos/releases/tag/v1.8.1) |
+  | OpenTofu        | 1.8.1   | [OpenTofu Website](https://opentofu.org/)                             |
+
+  ```
+
+  ## Example of usage
+
+  ```hcl
+  {{ include "./examples/complete/main.tf" }}
+  ```
+
+  {{ .Requirements }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+output:
+  file: README.md
+  mode: replace
+
+sort:
+  enabled: false
