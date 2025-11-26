@@ -1,0 +1,3 @@
+machine:
+  install:
+    image: ${initial_image}

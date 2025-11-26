@@ -1,0 +1,57 @@
+machine:
+  install:
+    image: ${initial_image}
+cluster:
+  network:
+    cni:
+      name: none
+  proxy:
+    disabled: true
+  extraManifests:
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
+  inlineManifests:
+  - name: cilium-install-config
+    contents: |
+      ---
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: cilium-install-values
+        namespace: kube-system
+      data:
+        cilium_helm_values.yaml: |-
+          kubeProxyReplacement: true
+          k8sServiceHost: localhost
+          k8sServicePort: 7445
+          securityContext:
+            capabilities:
+              ciliumAgent: [ CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID ]
+              cleanCiliumState: [ NET_ADMIN, SYS_ADMIN, SYS_RESOURCE ]
+          gatewayAPI:
+            enabled: true
+            enableAppProtocol: true
+            enableAlpn: true
+          ipam:
+            mode: kubernetes
+          cgroup:
+            autoMount:
+              enabled: false
+            hostRoot: /sys/fs/cgroup
+          hubble:
+            enabled: true
+            peerService:
+              clusterDomain: cluster.local
+            relay:
+              enabled: true
+            tls:
+              auto:
+                certValidityDuration: 1095
+                enabled: true
+                method: helm
+            ui:
+              enabled: true

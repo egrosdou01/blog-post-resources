@@ -1,0 +1,22 @@
+version: '>= 0.16.0'
+
+formatter: markdown table
+
+content: |-
+  # Create a Talos Kubernetes Cluster
+
+  To run this example you need to execute:
+
+  ```hcl
+  $ tofu init
+  $ tofu plan
+  $ tofu apply
+  ```
+
+  ```hcl
+  {{ include "./main.tf" }}
+  ```
+
+output:
+  file: README.md
+  mode: replace
