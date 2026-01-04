@@ -1,0 +1,24 @@
+---
+apiVersion: ceph.rook.io/v1
+kind: CephBlockPool
+metadata:
+  name: examaple-storage-block-data
+  namespace: rook-ceph
+spec:
+  failureDomain: host
+  replicated:
+    size: 2
+  parameters:
+    compression_mode: aggressive
+    compression_algorithm: lz4
+    compression_required_ratio: "0.99"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: cepth-block
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: example-storage-block-data
+reclaimPolicy: Delete
