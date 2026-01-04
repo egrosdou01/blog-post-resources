@@ -1,0 +1,54 @@
+---
+apiVersion: ceph.rook.io/v1
+kind: CephFilesystem
+metadata:
+  name: example-storage-fs
+  namespace: rook-ceph
+spec:
+  metadataPool:
+    replicated:
+      size: 2
+      requireSafeReplicaSize: true
+    parameters:
+      compression_mode: aggressive
+      compression_algorithm: lz4
+      compression_required_ratio: "0.99"
+  dataPools:
+  - name: replicated
+    failureDomain: host
+    replicated:
+      size: 2
+    parameters:
+      compression_mode: aggressive
+      compression_algorithm: lz4
+      compression_required_ratio: "0.99"
+  preserveFilesystemOnDelete: false
+  metadataServer:
+    activeCount: 1
+    activeStandby: false
+    resources:
+      limits:
+        memory: "2Gi"
+      requests:
+        memory: "2Gi"
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-fs
+provisioner: rook-ceph.cephfs.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  fsName: example-storage-fs
+  pool: storage-fs-replicated
+  mounter: fuse
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-cephfs-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+allowVolumeExpansion: false
+reclaimPolicy: Delete
+mountOptions:
+  - debug
