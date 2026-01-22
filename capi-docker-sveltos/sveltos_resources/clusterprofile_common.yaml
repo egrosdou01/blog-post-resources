@@ -1,0 +1,13 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-capd-common
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt
+  policyRefs:
+  - name: deploy-capd-clusterclass
+    namespace: default
+    kind: ConfigMap

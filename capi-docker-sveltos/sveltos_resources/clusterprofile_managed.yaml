@@ -1,0 +1,20 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-capd-managed
+spec:
+  clusterSelector:
+    matchExpressions:
+    - { key: env, operator: In, values: [ test, staging ] }
+  syncMode: Continuous
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.18.5
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      kubeProxyReplacement: true
