@@ -1,0 +1,20 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-capmox
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt
+  templateResourceRefs:
+  - resource:
+      apiVersion: v1
+      kind: ConfigMap
+      name: existing-users
+      namespace: default
+    identifier: Users
+  policyRefs:
+  - name: deploy-capmox
+    namespace: default
+    kind: ConfigMap
