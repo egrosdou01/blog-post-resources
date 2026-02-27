@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deploy-kyverno-policies
+  namespace: default
+data:
+  deploy-kyverno-policies.yaml: |
+    ---
+    apiVersion: kyverno.io/v1
+    kind: ClusterPolicy
+    metadata:
+      name: require-namespace-labels
+      annotations:
+        policies.kyverno.io/title: Require Namespace Labels Defintion
+        policies.kyverno.io/category: Best Practices
+        policies.kyverno.io/severity: medium
+        policies.kyverno.io/subject: Namespace
+        kyverno.io/kyverno-version: 1.6.0
+        policies.kyverno.io/description: >-
+          This policy ensures that all namespaces have a 'purpose' label with one of
+          the allowed values: 'development', 'staging', or 'production'. This helps
+          with resource organization and applying environment-specific policies.
+    spec:
+      validationFailureAction: Enforce
+      background: true
+      rules:
+        - name: check-namespace-purpose-label
+          match:
+            resources:
+              kinds:
+                - Namespace
+          validate:
+            message: "The Namespace must have a 'purpose' label with an allowed value (development, staging, production)."
+            pattern:
+              metadata:
+                labels:
+                  purpose: "dev|staging|prod"
