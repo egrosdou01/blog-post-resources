@@ -1,0 +1,85 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterPromotion
+metadata:
+  name: kyverno-rollout-auto
+spec:
+  profileSpec:
+    syncMode: Continuous
+    maxUpdate: 30%
+    helmCharts:
+    - repositoryURL:    https://kyverno.github.io/kyverno/
+      repositoryName:   kyverno
+      chartName:        kyverno/kyverno
+      chartVersion:     3.5.2
+      releaseName:      kyverno-latest
+      releaseNamespace: kyverno
+      helmChartAction:  Install
+    validateHealths:
+    - name: kyverno-deploy-health
+      featureID: Helm
+      group: "apps"
+      version: "v1"
+      kind: "Deployment"
+      namespace: kyverno
+      script: |
+        function evaluate()
+          hs = {}
+          hs.healthy = false
+          hs.message = "Available replicas not matching requested replicas"
+          if obj.status ~= nil then
+            if obj.status.availableReplicas ~= nil then
+              if obj.status.availableReplicas == obj.spec.replicas then
+                hs.healthy = true
+              end
+            end
+          end
+          return hs
+        end
+    policyRefs:
+    - name: deploy-kyverno-policies
+      namespace: default
+      kind: ConfigMap
+  stages:
+  - name: dev # Stage 1: dev environment
+    clusterSelector:
+      matchLabels:
+        env: dev
+    trigger:
+      auto:
+        delay: 2m # Wait 2 minutes after successful deployment before promoting
+        postDelayHealthChecks:
+        - name: kyverno-policy-health
+          featureID: Resources
+          group: "kyverno.io"
+          version: "v1"
+          kind: "ClusterPolicy"
+          script: |
+            function evaluate()
+              hs = {}
+              hs.healthy = false
+              hs.message = "ClusterPolicy not enforced or missing validationFailureAction"
+
+              if obj ~= nil then
+                if obj.spec ~= nil and obj.spec.validationFailureAction ~= nil then
+                  if obj.spec.validationFailureAction == "Enforce" then
+                    hs.healthy = true
+                    hs.message = "ClusterPolicy is enforced"
+                  else
+                    hs.message = "ClusterPolicy exists but is not enforced (set to '" .. obj.spec.validationFailureAction .. "')"
+                  end
+                else
+                  hs.message = "ClusterPolicy exists but has no validationFailureAction defined"
+                end
+              else
+                hs.message = "ClusterPolicy object not found"
+              end
+              return hs
+            end
+  - name: staging # Stage 2: staging environment
+    clusterSelector:
+      matchLabels:
+        env: staging
+    trigger:
+      auto:
+        delay: 2m # Wait 2 minutes after successful deployment before promoting
