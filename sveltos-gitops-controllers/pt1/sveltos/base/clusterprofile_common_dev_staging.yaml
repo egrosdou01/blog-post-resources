@@ -1,0 +1,44 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: common-dev-staging
+spec:
+  clusterSelector:
+    matchExpressions:
+    - { key: env, operator: In, values: [ dev, staging ] }
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.18.5
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      hubble:
+        enabled: true
+        peerService:
+          clusterDomain: cluster.local
+        relay:
+          enabled: true
+        tls:
+          auto:
+            certValidityDuration: 1095
+            enabled: true
+            method: helm
+        ui:
+          enabled: true
+      nodePort:
+        enabled: true
+      debug:
+        enabled: true
+  - repositoryURL: https://charts.jetstack.io
+    repositoryName: jetstack
+    chartName: jetstack/cert-manager
+    chartVersion: v1.19.4
+    releaseName: cert-manager
+    releaseNamespace: cert-manager
+    helmChartAction: Install
+    values: |
+      crds:
+        enabled: true

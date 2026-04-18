@@ -1,0 +1,21 @@
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: argocd
+spec:
+  clusterSelector:
+    matchLabels:
+      git-controller: argo
+  helmCharts:
+  - repositoryURL: https://argoproj.github.io/argo-helm
+    repositoryName: argo
+    chartName: argo-cd
+    chartVersion: 9.4.17
+    releaseName: argocd
+    releaseNamespace: argocd
+    helmChartAction: Install
+  policyRefs:
+  - name: argo-resources
+    namespace: default
+    kind: ConfigMap

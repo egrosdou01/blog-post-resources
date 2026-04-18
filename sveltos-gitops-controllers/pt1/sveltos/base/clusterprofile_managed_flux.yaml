@@ -1,0 +1,20 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: flux
+spec:
+  clusterSelector:
+    matchLabels:
+      git-controller: flux
+  helmCharts:
+  - repositoryURL: oci://ghcr.io/controlplaneio-fluxcd/charts
+    repositoryName: flux-operator
+    chartName: flux-operator
+    chartVersion: 0.46.0
+    releaseName: flux-operator
+    releaseNamespace: flux-system
+    helmChartAction: Install
+  policyRefs:
+  - name: flux-resources
+    namespace: default
+    kind: ConfigMap
