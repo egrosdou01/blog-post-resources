@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flux-resources
+  namespace: default
+data:
+  flux_resources.yaml: |
+    ---
+    apiVersion: fluxcd.controlplane.io/v1
+    kind: FluxInstance
+    metadata:
+      name: flux
+      namespace: flux-system
+      annotations:
+        fluxcd.controlplane.io/reconcile: "enabled"
+        fluxcd.controlplane.io/reconcileEvery: "1h"
+        fluxcd.controlplane.io/reconcileTimeout: "5m"
+    spec:
+      distribution:
+        version: "2.x"
+        registry: "ghcr.io/fluxcd"
+      components:
+        - source-controller
+        - kustomize-controller
+        - helm-controller
+        - notification-controller
+        - image-reflector-controller
+        - image-automation-controller
+      cluster:
+        type: kubernetes
+        size: medium
+        multitenant: false
+        networkPolicy: false
+        domain: "cluster.local"
+      commonMetadata:
+        labels:
+          app.kubernetes.io/name: flux
+      kustomize:
+        patches:
+          - target:
+              kind: Deployment
+            patch: |
+              - op: replace
+                path: /spec/template/spec/nodeSelector
+                value:
+                  kubernetes.io/os: linux
+              - op: add
+                path: /spec/template/spec/tolerations
+                value:
+                  - key: "CriticalAddonsOnly"
+                    operator: "Exists"
+    ---
+    apiVersion: source.toolkit.fluxcd.io/v1
+    kind: GitRepository
+    metadata:
+      name: test-repo-main
+      namespace: flux-system
+    spec:
+      interval: 30s
+      ref:
+        branch: main
+      timeout: 60s
+      url: https://github.com/egrosdou01/yaml_flux.git # This needs to be changed to your own repo

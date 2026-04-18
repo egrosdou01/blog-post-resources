@@ -1,0 +1,24 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: flux
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt
+  helmCharts:
+  - repositoryURL: oci://ghcr.io/controlplaneio-fluxcd/charts
+    repositoryName: flux-operator
+    chartName: flux-operator
+    chartVersion: 0.46.0
+    releaseName: flux-operator
+    releaseNamespace: flux-system
+    helmChartAction: Install
+  policyRefs:
+  - name: flux-resources-mgmt
+    namespace: default
+    kind: ConfigMap
+  - kind: GitRepository
+    name: sveltos-mgmt-main # Define the Flux GitRepository resource name defined in the flux-resources ConfigMap
+    namespace: flux-system
+    path: ./sveltos-gitops-controllers/pt1/sveltos/
