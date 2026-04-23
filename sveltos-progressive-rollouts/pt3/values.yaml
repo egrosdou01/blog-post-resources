@@ -1,0 +1,94 @@
+serviceAccountMountPath: /var/run/7e7fd2f5-b15d-4803-bc52-f54fba357e76/secrets/kubernetes.io/serviceaccount # Not sure if this requried. Read the documentation for more clarity
+groups:
+  'botkube-plugins-default':
+    create: true
+    rules:
+    # Define the permissions based on your use-case
+    - apiGroups: [ "" ]
+      resources: [ "pods", "services", "configmaps", "events" ]
+      verbs: [ "get", "list", "watch" ]
+    - apiGroups: [ "apiextensions.k8s.io" ]
+      resources: [ "customresourcedefinitions" ]
+      verbs: [ "get", "list", "watch" ]
+    - apiGroups: [ "config.projectsveltos.io" ]
+      resources: [ "clusterpromotions", "clusterpromotions/status" ]
+      verbs: [ "get", "list", "watch", "update", "patch" ]
+actions: # Define the action to be performed based on an event
+'revoke-approval':
+  enabled: true
+  displayName: "ClusterPromotion Approval Handler"
+  command: "kubectl describe {{ .Event.Kind | lower }}{{ if .Event.Namespace }} -n {{ .Event.Namespace }}{{ end }} {{ .Event.Name }}"
+  bindings:
+    sources:
+    - k8s-clusterpromotions
+    executors:
+    - k8s-default-tools
+sources: # Define the source of an event
+'k8s-clusterpromotions':
+  displayName: "ClusterPromotion Events"
+  botkube/kubernetes:
+    context: &default-plugin-context
+      rbac:
+        group:
+          type: Static
+          prefix: ""
+          static:
+            values: [ "botkube-plugins-default" ]
+    enabled: true
+    config:
+      namespaces: &k8s-events-namespaces
+        include:
+        - ".*"
+      event:
+        types:
+        - create
+        - update
+      filters:
+        objectAnnotationChecker: true
+      resources:
+      - type: config.projectsveltos.io/v1beta1/clusterpromotions
+        event:
+          types:
+          - create
+          - update
+        updateSetting:
+          includeDiff: true
+          fields:
+          - spec.stages[*].trigger.manual.approved
+executors: # Enable the needed executors
+k8s-default-tools:
+  botkube/kubectl:
+    displayName: "Kubectl"
+    enabled: true
+    config:
+      defaultNamespace: "default"
+    context: *default-plugin-context
+aliases:
+k:
+  command: kubectl
+  displayName: "Kubectl alias"
+communications:
+'default-group':
+  socketSlack:
+    enabled: true
+    channels:
+      'default':
+        name: 'all-sveltos-promotions-demo'
+        bindings:
+          executors:
+          - k8s-default-tools
+          sources:
+          - k8s-clusterpromotions
+    botToken: 'xoxb-' # Define your own tokens
+    appToken: 'xapp-' # Define your own tokens
+settings:
+clusterName: "dev-cluster"
+log:
+  level: info
+plugins:
+cacheDir: "/tmp"
+repositories:
+  botkube:
+    url: https://github.com/kubeshop/botkube/releases/download/v1.14.0/plugins-index.yaml
+  botkubeExtra:
+    url: https://github.com/kubeshop/botkube-plugins/releases/download/v1.14.0/plugins-index.yaml
