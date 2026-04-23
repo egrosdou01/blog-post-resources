@@ -1,0 +1,21 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: deploy-botkube-mgmt
+spec:
+  clusterSelector:
+    matchLabels:
+      type: mgmt # Ensure the Sveltos management cluster has the label type: mgmt
+  syncMode: Continuous
+  helmCharts:
+  - repositoryURL: https://charts.botkube.io
+    repositoryName: botkube
+    chartName: botkube/botkube
+    chartVersion: v1.14.0
+    releaseName: botkube
+    releaseNamespace: botkube
+    helmChartAction: Install
+    valuesFrom:
+    - kind: ConfigMap
+      name: botkube-config
+      namespace: default
