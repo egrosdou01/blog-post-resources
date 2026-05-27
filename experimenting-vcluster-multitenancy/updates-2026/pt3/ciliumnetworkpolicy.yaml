@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: isolate-vcluster-team-a
+  namespace: vcluster-team-a
+spec:
+  endpointSelector: {} #Applies this policy to all pods in the namespace
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: vcluster-team-a
+  - fromCIDR:
+    - <IP Subnet> # e.g. 10.10.x.x/24 Replace with your management network CIDR
+    toPorts:
+    - ports:
+      - port: "8443"
+        protocol: TCP
+  - fromEntities:
+    - host # Matches traffic routed through the local node's network interface
+    toPorts:
+    - ports:
+      - port: "8443" # We reach the API server on TCP port 443, but because we use the Cilium LoadBalancer feature, first we reach the default vCluster TCP port 8443 and Cilium forwards it where it should
+        protocol: TCP
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: vcluster-team-a
+  - toEntities:
+    - kube-apiserver
+    - host
