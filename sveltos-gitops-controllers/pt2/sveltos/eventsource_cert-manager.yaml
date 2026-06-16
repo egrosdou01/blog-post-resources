@@ -1,0 +1,14 @@
+apiVersion: lib.projectsveltos.io/v1beta1
+kind: EventSource
+metadata:
+  name: detect-cluster-requiring-cert-manager
+spec:
+  collectResources: true
+  resourceSelectors:
+  - group: "lib.projectsveltos.io"
+    version: "v1beta1"
+    kind: "SveltosCluster"
+    labelFilters:
+    - key: cert-manager
+      operation: Equal
+      value: required
