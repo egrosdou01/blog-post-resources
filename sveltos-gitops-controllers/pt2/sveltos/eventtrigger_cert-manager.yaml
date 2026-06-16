@@ -1,0 +1,17 @@
+apiVersion: lib.projectsveltos.io/v1beta1
+kind: EventTrigger
+metadata:
+  name: deploy-cert-manager
+spec:
+  sourceClusterSelector:
+    matchLabels:
+      type: mgmt
+  destinationClusterSelector:
+    matchLabels:
+      type: mgmt
+  eventSourceName: detect-cluster-requiring-cert-manager
+  oneForEvent: true
+  policyRefs:
+  - name: cert-manager-helmrelease
+    namespace: default
+    kind: ConfigMap
