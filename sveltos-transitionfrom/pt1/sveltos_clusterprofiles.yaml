@@ -1,0 +1,45 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: cilium-cni-1197-staging
+spec:
+  clusterSelector:
+    matchLabels:
+      env: staging
+      cni: cilium1197
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.19.7
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      k8sServiceHost: 127.0.0.1
+      k8sServicePort: 6443
+      kubeProxyReplacement: true
+---
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: cilium-cni-1198-staging
+spec:
+  clusterSelector:
+    matchLabels:
+      env: staging
+      cni: cilium1198
+  transitionFrom:
+  - cilium-cni-1197-staging
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.19.8
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      k8sServiceHost: 127.0.0.1
+      k8sServicePort: 6443
+      kubeProxyReplacement: true
