@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cni-net-test
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe-target
+  namespace: cni-net-test
+  labels:
+    app: probe-target
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: rke2-sveltos-worker01
+  containers:
+  - name: target
+    image: busybox:1.38
+    command:
+    - sh
+    - -c
+    - |
+      echo ok > /health
+      while true; do
+        nc -l -p 8080 -e sh -c 'cat /health'
+      done
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe-client
+  namespace: cni-net-test
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: rke2-sveltos-worker02
+  containers:
+  - name: client
+    image: busybox:1.38
+    command: [ "sh", "-c", "sleep 3600" ]
