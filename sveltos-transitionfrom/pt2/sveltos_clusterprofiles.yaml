@@ -1,0 +1,51 @@
+apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: cilium-cni-1197-staging
+spec:
+  clusterSelector:
+    matchLabels:
+      env: staging
+      cni: cilium1197
+  helmCharts:
+  - chartName: cilium/cilium
+    chartVersion: 1.19.7
+    helmChartAction: Install
+    releaseName: cilium
+    releaseNamespace: kube-system
+    repositoryName: cilium
+    repositoryURL: https://helm.cilium.io/
+    values: |
+      k8sServiceHost: 127.0.0.1
+      k8sServicePort: 6443
+      kubeProxyReplacement: true
+  validateHealths:
+  - name: cilium
+    featureID: Helm
+    group: "apps"
+    version: "v1"
+    kind: "DaemonSet"
+    namespace: kube-system
+    script: |
+      function evaluate(obj)
+        if obj.status ~= nil and obj.status.numberAvailable ~= nil
+            and obj.status.desiredNumberScheduled ~= nil
+            and obj.status.numberAvailable == obj.status.desiredNumberScheduled then
+          return {healthy=true, message=""}
+        end
+        return {healthy=false, message="Available replicas not matching desired scheduled replicas for ds/cilium"}
+      end
+  - name: cilium-operator
+    featureID: Helm
+    group: "apps"
+    version: "v1"
+    kind: "Deployment"
+    namespace: kube-system
+    script: |
+      function evaluate(obj)
+        if obj.status ~= nil and obj.status.availableReplicas ~= nil
+            and obj.status.availableReplicas >= 1 then
+          return {healthy=true, message=""}
+        end
+        return {healthy=false, message="cilium-operator does not have ready replicas"}
+      end
